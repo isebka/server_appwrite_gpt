@@ -1,1 +1,6 @@
 aio-pika
+g4f
+aiohttp
+appwrite
+gspread
+oauth2client
