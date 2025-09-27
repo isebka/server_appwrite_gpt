@@ -87,6 +87,8 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/add_email":
         try:
+            logger.info("d: ",Context)
+            logger.info("s: ",context)
             email = context.email
             user_id = context.user_id
             if not email or not user_id:
