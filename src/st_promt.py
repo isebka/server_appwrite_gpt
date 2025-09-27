@@ -1,5 +1,8 @@
 import os
 import aiohttp
+import logging
+
+logger = logging.getLogger(__name__)
 
 file_path = os.environ.get("file_path")
 
@@ -15,8 +18,8 @@ async def download_file():
                         if not chunk:
                             break
                         f.write(chunk)
-                print(f"Файл успешно скачан и сохранён в: {file_path}")
+                logger.info(f"Файл успешно скачан и сохранён в: {file_path}")
                 return True
             else:
-                print(f"Ошибка скачивания: статус {response.status}")
+                logger.info(f"Ошибка скачивания: статус {response.status}")
                 return False
