@@ -61,6 +61,9 @@ async def start():
 
     except Exception as e:
         logger.error(f"Consumer connection error: {e}", exc_info=True)
+    finally:
+        if connection and not connection.is_closed:
+            await connection.close()
 
 
 # Основная функция, вызываемая Appwrite
