@@ -6,13 +6,7 @@ import time
 # Настройки
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 # Новый код: Получаем JSON-строку из env и парсим в dict
-creds_json_str = os.environ.get("GOOGLE_CREDENTIALS_JSON")
-if not creds_json_str:
-    raise ValueError("GOOGLE_CREDENTIALS_JSON environment variable is not set!")
-try:
-    creds_dict = json.loads(creds_json_str)  # Преобразуем строку в dict
-except json.JSONDecodeError:
-    raise ValueError("Invalid JSON in GOOGLE_CREDENTIALS_JSON!")
+creds_dict = os.environ.get("GOOGLE_CREDENTIALS_JSON")
 
 SPREADSHEET_ID = os.environ.get("SPREADSHEET_ID")
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, SCOPE)
