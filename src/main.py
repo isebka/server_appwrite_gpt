@@ -90,6 +90,19 @@ async def main(context):
             return context.res.json({"error": "Invalid JSON"}, status=400)
         except Exception as e:
             return context.res.json({"error": str(e)}, status=500)
+            
+    if context.req.method == "POST" and context.req.path == "/url":
+        try:
+            # Получаем тело запроса (предполагаем JSON)
+            body = json.loads(context.req.body)
+            user_id = body.get("user_id")
+            if not user_id or not user_id:
+                return context.res.json({"error": "Email is required"}, status=400)
+            ch = check_available(user_id)
+            return context.res.json({"url": "https://docs.google.com/spreadsheets/d/" + ch.get("spreadsheet_id")}, status=200)
+        except Exception as e:
+            logger.info(f"Ошибка {e}")
+            return context.res.json({"error": str(e)}, status=500)
 
     # Новый эндпоинт для вывода логов
     if context.req.method == "GET" and context.req.path == "/logs":
