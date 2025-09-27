@@ -94,12 +94,12 @@ async def main(context):
 
             # Асинхронно запускаем задачу (если сервер поддерживает asyncio)
             give_permision(user_id, email)
-            return context.res.json({"status": "Email processed successfully"}, status=200)
+            return context.res.json({"status": "Email processed successfully"})
         except json.JSONDecodeError:
-            return context.res.json({"error": "Invalid JSON"}, status=400)
+            return context.res.json({"error": "Invalid JSON"})
         except Exception as e:
             logger.error(f"Error: {e}")
-            return context.res.json({"error": str(e)}, status=500)
+            return context.res.json({"error": str(e)})
 
     # Новый эндпоинт для вывода логов
     if context.req.method == "GET" and context.req.path == "/logs":
