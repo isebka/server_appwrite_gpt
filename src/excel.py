@@ -102,7 +102,7 @@ def check_available(user_id):
             collection_id=os.environ.get("APPWRITE_COLLECTION_ID"),
             queries=[Query.equal("userid", str(user_id))]  # Использование Query.equal вместо строки
         )
-        return {"user_id": result.get("documents")[0].get("userid"), "spreadsheet_id": result.get("documents")[0].get("spreadsheet_id")}
+        return {"user_id": result.get("documents")[0].get("userid"), "spreadsheet_id": result.get("documents")[0].get("spreadsheet_id"), "id": result.get("documents")[0].get("$id")}
     except IndexError:
         return None
 
@@ -122,6 +122,14 @@ def give_permision(user_id, email):
             sh = client.open_by_key(res.get("spreadsheet_id"))
             sh.share(email, perm_type='user',
                                  role='writer')  # Делишь с сервисным аккаунтом
+            databases.update_document(
+                database_id=os.environ.get("APPWRITE_DATABASE_ID"),
+                collection_id=os.environ.get("APPWRITE_COLLECTION_ID"),
+                document_id=res.get("id"),  # <--- Используем найденный ID
+                data={
+                    'email': email  # Данные для обновления
+                }
+            )
             return True
         else: # 1 - если аккаунт существует
             return False
