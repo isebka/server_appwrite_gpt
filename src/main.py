@@ -6,7 +6,7 @@ from .gpt_sort import gpt_response
 
 from .st_promt import download_file
 
-from .excel import excel_manager
+from .excel import excel_manager,check_available,give_permision
 
 
 
@@ -72,36 +72,38 @@ async def main(context):
         await asyncio.create_task(download_file())
         return context.res.json({"status": "Promt replait"})
 
-    # Новый эндпоинт для POST-запросов с email
-    if context.req.method == "POST" and context.req.path == "/email":
+    if context.req.method == "GET" and context.req.path == "/url":
         try:
-            # Получаем тело запроса (предполагаем JSON)
+            user_id = context.req.query.get("user_id")
+            if not user_id:
+                return context.res.json({"error": "user_id is required"}, status=400)
+            ch = check_available(user_id)
+            if not ch.get("spreadsheet_id"):
+                return context.res.json({"error": "No spreadsheet found"}, status=404)
+            return context.res.json({"url": "https://docs.google.com/spreadsheets/d/" + ch.get("spreadsheet_id")},
+                                    status=200)
+        except Exception as e:
+            logger.error(f"Error: {e}")
+            return context.res.json({"error": str(e)}, status=500)
+
+    # Второй эндпоинт: POST /add_email
+    if context.req.method == "POST" and context.req.path == "/add_email":
+        try:
             body = json.loads(context.req.body)
             email = body.get("email")
-            uesr_id = body.get("user_id")
+            user_id = body.get("user_id")
+            if not email or not user_id:
+                return context.res.json({"error": "user_id and email are required"}, status=400)
 
-            if not email or not uesr_id:
-                return context.res.json({"error": "Email is required"}, status=400)
-
-            await asyncio.create_task(give_permision(uesr_id, email))
-
-            return context.res.json({"status": "Email processed successfully"})
+            # Асинхронно запускаем задачу (если сервер поддерживает asyncio)
+            gh = give_permision(user_id, email)
+            if not gh:
+                return context.res.json({"status": "Email access"}, status=200)
+            return context.res.json({"status": "Email processed successfully"}, status=200)
         except json.JSONDecodeError:
             return context.res.json({"error": "Invalid JSON"}, status=400)
         except Exception as e:
-            return context.res.json({"error": str(e)}, status=500)
-            
-    if context.req.method == "POST" and context.req.path == "/url":
-        try:
-            # Получаем тело запроса (предполагаем JSON)
-            body = json.loads(context.req.body)
-            user_id = body.get("user_id")
-            if not user_id or not user_id:
-                return context.res.json({"error": "Email is required"}, status=400)
-            ch = check_available(user_id)
-            return context.res.json({"url": "https://docs.google.com/spreadsheets/d/" + ch.get("spreadsheet_id")}, status=200)
-        except Exception as e:
-            logger.info(f"Ошибка {e}")
+            logger.error(f"Error: {e}")
             return context.res.json({"error": str(e)}, status=500)
 
     # Новый эндпоинт для вывода логов
