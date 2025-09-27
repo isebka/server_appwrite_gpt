@@ -8,6 +8,7 @@ file_path = os.environ.get("file_path")
 logger = logging.getLogger(__name__)
 
 def gpt_response(text, user_id):
+    logging.info("start gpt fun")
     if not text or not user_id:
         return None
     try:

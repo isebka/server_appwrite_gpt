@@ -175,6 +175,7 @@ def create_user_spreadsheet(user_id):
 
 
 def excel_manager(text,user_id):
+    logger.info("start excel")
     try:
         if not user_id or not text:
             return None

@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 def ober_message():
     async def message_sort(message: aio_pika.IncomingMessage):
             try:
+                logging.info("message_sort start")
                 gpt_response(text=message.body.decode("utf-8"), user_id=message.headers.get("user_id"))
                 await message.ack()
                 await asyncio.sleep(5)
