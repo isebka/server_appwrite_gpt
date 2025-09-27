@@ -124,7 +124,7 @@ def give_permision(user_id, email):
                                  role='writer')  # Делишь с сервисным аккаунтом
             return True
         else: # 1 - если аккаунт существует
-            return True
+            return False
     else:
         return None
 

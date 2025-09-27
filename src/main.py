@@ -103,8 +103,10 @@ async def main(context):
                 return context.res.json({"error": "user_id and email are required"})
 
             # Асинхронно запускаем задачу (если сервер поддерживает asyncio)
-            give_permision(user_id, email)
-            return context.res.json({"status": "Email processed successfully"})
+            gp = give_permision(user_id, email)
+            if not gp:
+            	return context.res.json({"status": "Email already"})
+            return context.res.json({"status": "Email successfully"})
         except json.JSONDecodeError:
             return context.res.json({"error": "Invalid JSON"})
         except Exception as e:
