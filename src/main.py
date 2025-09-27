@@ -87,7 +87,12 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/add_email":
         try:
-            logger.info("s: ",context)
+        	# ✅ Правильно считываем тело JSON-запроса
+            try:
+                data = context.req.json() # Предполагаем, что context.req имеет метод .json()
+            except json.JSONDecodeError:
+                 # Отдельно обрабатываем ошибку, если тело не является корректным JSON
+                return context.req.json({"error": "Invalid JSON in request body"})
             email = context.email
             user_id = context.user_id
             if not email or not user_id:
