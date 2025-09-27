@@ -85,34 +85,22 @@ async def main(context):
             logger.error(f"Error: {e}")
             return context.res.json({"error": str(e)})
 
-    # Второй эндпоинт: POST /add_email
     if context.req.method == "POST" and context.req.path == "/add_email":
         try:
-            # Читаем тело асинхронно как текст (это фиксит пустой body)
-            bodd = await context.req.body()
-            logger.info("popilar: %s", bodd)  # Правильное логирование
-            body_text = await context.req.text()  # Или await context.req.body() если это стрим
-            logger.info("check: %s", body_text)  # Правильное логирование
-            
-            if not body_text:
-                return context.res.json({"error": "Empty body"})
-            
-            body = json.loads(body_text)
-            logger.info("info: %s", body)
-            
+            body = json.loads(context.req.body)
             email = body.get("email")
             user_id = body.get("user_id")
             if not email or not user_id:
-                return context.res.json({"error": "user_id and email are required"})
+                return context.res.json({"error": "user_id and email are required"}, status=400)
 
-            give_permision(user_id, email)
-            
-            return context.res.json({"status": "Email processed successfully"})
+            # Асинхронно запускаем задачу (если сервер поддерживает asyncio)
+            gh = give_permision(user_id, email)
+            return context.res.json({"status": "Email processed successfully"}, status=200)
         except json.JSONDecodeError:
-            return context.res.json({"error": "Invalid JSON"})
+            return context.res.json({"error": "Invalid JSON"}, status=400)
         except Exception as e:
-            logger.error("Error: %s", e)
-            return context.res.json({"error": str(e)})
+            logger.error(f"Error: {e}")
+            return context.res.json({"error": str(e)}, status=500)
 
     # Новый эндпоинт для вывода логов
     if context.req.method == "GET" and context.req.path == "/logs":
