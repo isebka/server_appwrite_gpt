@@ -1,7 +1,7 @@
 from g4f.client import Client
 import os,json, logging
 from .excel import excel_manager
-from .st_promt import download_file
+from .st_promt import check_file_update
 
 file_path = os.environ.get("file_path")
 
@@ -31,5 +31,5 @@ def gpt_response(text, user_id):
         except json.JSONDecodeError:
             logger.info("Error: The response content is not valid JSON:", content_str)
     except FileNotFoundError:
-        download_file()
+        check_file_update()
 
