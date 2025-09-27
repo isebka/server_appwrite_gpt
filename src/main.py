@@ -87,7 +87,7 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/add_email":
         try:
-        	logger.info("test")
+            logger.info("test")
             data = context.req.body  
         
             # Проверяем, является ли data словарем, как ожидается
