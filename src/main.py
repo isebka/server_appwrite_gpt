@@ -80,11 +80,10 @@ async def main(context):
             ch = check_available(user_id)
             if not ch.get("spreadsheet_id"):
                 return context.res.json({"error": "No spreadsheet found"}, status=404)
-            return context.res.json({"url": "https://docs.google.com/spreadsheets/d/" + ch.get("spreadsheet_id")},
-                                    status=200)
+            return context.res.json({"url": "https://docs.google.com/spreadsheets/d/" + ch["spreadsheet_id"]})
         except Exception as e:
             logger.error(f"Error: {e}")
-            return context.res.json({"error": str(e)}, status=500)
+            return context.res.json({"error": str(e)})
 
     # Второй эндпоинт: POST /add_email
     if context.req.method == "POST" and context.req.path == "/add_email":
