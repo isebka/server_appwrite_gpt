@@ -87,11 +87,14 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/add_email":
         try:
-            raw_body = context.req.body  
+            data = context.req.body  
         
-            # 2. Декодируем строку/байты в Python-словарь.
-            data = json.loads(raw_body)
-        
+            # Проверяем, является ли data словарем, как ожидается
+            if not isinstance(data, dict):
+                # Если это не словарь, возможно, тело запроса пустое или не JSON
+                logging.error(f"context.req.body is not a dict, but: {type(data)}")
+                return context.req.json({"error": "Request body is missing or not a dictionary."})
+
             # Извлекаем данные из словаря
             email = data.get("email")
             user_id = data.get("user_id")
