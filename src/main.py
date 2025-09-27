@@ -87,6 +87,7 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/add_email":
         try:
+        	logging.info(context.req.body)
             body = json.loads(context.req.body)
             email = body.get("email")
             user_id = body.get("user_id")
