@@ -76,10 +76,10 @@ async def main(context):
         try:
             user_id = context.req.query.get("user_id")
             if not user_id:
-                return context.res.json({"error": "user_id is required"}, status=400)
+                return context.res.json({"error": "user_id is required"})
             ch = check_available(user_id)
             if not ch.get("spreadsheet_id"):
-                return context.res.json({"error": "No spreadsheet found"}, status=404)
+                return context.res.json({"error": "No spreadsheet found"})
             return context.res.json({"url": "https://docs.google.com/spreadsheets/d/" + ch["spreadsheet_id"]})
         except Exception as e:
             logger.error(f"Error: {e}")
@@ -88,22 +88,31 @@ async def main(context):
     # Второй эндпоинт: POST /add_email
     if context.req.method == "POST" and context.req.path == "/add_email":
         try:
-            body = json.loads(context.req.body)
+            # Читаем тело асинхронно как текст (это фиксит пустой body)
+            bodd = await context.req.body()
+            logger.info("popilar: %s", bodd)  # Правильное логирование
+            body_text = await context.req.text()  # Или await context.req.body() если это стрим
+            logger.info("check: %s", body_text)  # Правильное логирование
+            
+            if not body_text:
+                return context.res.json({"error": "Empty body"})
+            
+            body = json.loads(body_text)
+            logger.info("info: %s", body)
+            
             email = body.get("email")
             user_id = body.get("user_id")
             if not email or not user_id:
-                return context.res.json({"error": "user_id and email are required"}, status=400)
+                return context.res.json({"error": "user_id and email are required"})
 
-            # Асинхронно запускаем задачу (если сервер поддерживает asyncio)
-            gh = give_permision(user_id, email)
-            if not gh:
-                return context.res.json({"status": "Email access"}, status=200)
-            return context.res.json({"status": "Email processed successfully"}, status=200)
+            give_permision(user_id, email)
+            
+            return context.res.json({"status": "Email processed successfully"})
         except json.JSONDecodeError:
-            return context.res.json({"error": "Invalid JSON"}, status=400)
+            return context.res.json({"error": "Invalid JSON"})
         except Exception as e:
-            logger.error(f"Error: {e}")
-            return context.res.json({"error": str(e)}, status=500)
+            logger.error("Error: %s", e)
+            return context.res.json({"error": str(e)})
 
     # Новый эндпоинт для вывода логов
     if context.req.method == "GET" and context.req.path == "/logs":
