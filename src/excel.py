@@ -158,6 +158,7 @@ def excel_manager(text,user_id):
         if not user_id or not text:
             return None
         ch = check_available(user_id)
+        logger.info(ch)
         if not ch: # Пользователя не сушествует
             spreadsheet_id = create_user_spreadsheet(user_id)
             add_transaction(spreadsheet_id, text)
@@ -165,4 +166,4 @@ def excel_manager(text,user_id):
         else:
             return add_transaction(ch.get("spreadsheet_id"), text)
     except Exception as e:
-        logging.error("Ошибка обработчика excel", e)
+        logger.error("Ошибка обработчика excel", e)
