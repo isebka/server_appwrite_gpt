@@ -87,8 +87,15 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/add_email":
         try:
-        	logging.info(context.req.body)
-            
+            body = json.loads(context.req.body)
+            email = body.get("email")
+            user_id = body.get("user_id")
+            if not email or not user_id:
+                return context.res.json({"error": "user_id and email are required"}, status=400)
+
+            # Асинхронно запускаем задачу (если сервер поддерживает asyncio)
+            gh = give_permision(user_id, email)
+            return context.res.json({"status": "Email processed successfully"}, status=200)
         except json.JSONDecodeError:
             return context.res.json({"error": "Invalid JSON"}, status=400)
         except Exception as e:
