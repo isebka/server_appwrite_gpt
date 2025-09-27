@@ -102,9 +102,7 @@ def check_available(user_id):
             collection_id=os.environ.get("APPWRITE_COLLECTION_ID"),
             queries=[Query.equal("userid", str(user_id))]  # Использование Query.equal вместо строки
         )
-        print(result)
-        logger.info(result)
-        return {"user_id": result.get("documents")[0].get("userid"), "spreadsheet_id": result.get("documents")[0].get("spreadsheet_id"), "id": result.get("documents")[0].get("$id"), "email": result.get("documents")[0].get("email")}
+        return {"user_id": result.get("documents")[0].get("userid"), "spreadsheet_id": result.get("documents")[0].get("spreadsheet_id"), "id": result.get("documents")[0].get("$id")}
     except IndexError:
         return None
 
@@ -114,10 +112,13 @@ def give_permision(user_id, email):
     if not email:
         return None
     if is_gmail_address(email):
+        result = databases.list_documents(
+            database_id=os.environ.get("APPWRITE_DATABASE_ID"),
+            collection_id=os.environ.get("APPWRITE_COLLECTION_ID"),
+            queries=[Query.equal("email", str(email))]  # Использование Query.equal вместо строки
+        )
         res = check_available(user_id)
-
-        if not res: # 0 - аккаунта не существует
-            create_user_spreadsheet(user_id)
+        if result['total'] == 0: # 0 - аккаунта не существует
             sh = client.open_by_key(res.get("spreadsheet_id"))
             sh.share(email, perm_type='user',
                                  role='writer')  # Делишь с сервисным аккаунтом
@@ -131,21 +132,7 @@ def give_permision(user_id, email):
             )
             return True
         else: # 1 - если аккаунт существует
-            if not res.get("email"):
-                sh = client.open_by_key(res.get("spreadsheet_id"))
-                sh.share(email, perm_type='user',
-                         role='writer')  # Делишь с сервисным аккаунтом
-                databases.update_document(
-                    database_id=os.environ.get("APPWRITE_DATABASE_ID"),
-                    collection_id=os.environ.get("APPWRITE_COLLECTION_ID"),
-                    document_id=res.get("id"),  # <--- Используем найденный ID
-                    data={
-                        'email': email  # Данные для обновления
-                    }
-                )
-                return True
-            else:
-                return False
+            return False
     else:
         return None
 
