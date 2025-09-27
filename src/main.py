@@ -87,12 +87,13 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/add_email":
         try:
+        	logger.info("test")
             data = context.req.body  
         
             # Проверяем, является ли data словарем, как ожидается
             if not isinstance(data, dict):
                 # Если это не словарь, возможно, тело запроса пустое или не JSON
-                logging.error(f"context.req.body is not a dict, but: {type(data)}")
+                logger.error(f"context.req.body is not a dict, but: {type(data)}")
                 return context.req.json({"error": "Request body is missing or not a dictionary."})
 
             # Извлекаем данные из словаря
