@@ -2,7 +2,7 @@ import logging
 import gspread
 from appwrite.exception import AppwriteException
 from oauth2client.service_account import ServiceAccountCredentials
-import os,json,re
+import os,json,re, base64
 import time
 from appwrite.query import Query
 from appwrite.client import Client
@@ -26,7 +26,8 @@ creds_json_str = os.environ.get("GOOGLE_CREDENTIALS_JSON")
 if not creds_json_str:
     raise ValueError("GOOGLE_CREDENTIALS_JSON environment variable is not set!")
 try:
-    creds_dict = json.loads(creds_json_str)  # Преобразуем строку в dict
+    json_str = base64.b64decode(creds_json_str).decode('utf-8')
+    creds_dict = json.loads(json_str)  # Преобразуем строку в dict
 except json.JSONDecodeError:
     raise ValueError("Invalid JSON in GOOGLE_CREDENTIALS_JSON!")
 
