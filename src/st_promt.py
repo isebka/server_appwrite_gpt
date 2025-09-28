@@ -81,5 +81,7 @@ async def check_file_update():
             success = await download_file()
             if success:
                 save_last_modified(current_last_modified)
+                return True
         else:
             logger.info("Файл не изменился.")
+            return False
