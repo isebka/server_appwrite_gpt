@@ -16,7 +16,8 @@ def gpt_response(text, user_id):
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
         modified_content = content.replace('[ТЕКСТ_ЗДЕСЬ]', text)
-
+        
+        logging.info("start gpt fun2")
         client = Client()
         response = client.chat.completions.create(
             model="gpt-5-nano",
@@ -32,6 +33,6 @@ def gpt_response(text, user_id):
         except json.JSONDecodeError:
             logger.info("Error: The response content is not valid JSON:", content_str)
     except Exception:
-        logger.info("check")
+        logging.info("check")
         check_file_update()
 
