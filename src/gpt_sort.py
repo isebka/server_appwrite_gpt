@@ -31,7 +31,7 @@ def gpt_response(text, user_id):
             excel_manager(content_dict, user_id)  # Now pass the dict to your function
         except json.JSONDecodeError:
             logger.info("Error: The response content is not valid JSON:", content_str)
-    except FileNotFoundError:
+    except Exception:
         logger.info("check")
         check_file_update()
 

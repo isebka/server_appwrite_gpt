@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 # Функция обработки сообщения (адаптирована из ober_message)
-async def process_message(text: str, user_id: str | None):
+async def process_message(text: str, user_id: str):
     try:
         logger.info("message processing start")
         gpt_response(text=text, user_id=user_id)  # Если gpt_response async, добавьте await
