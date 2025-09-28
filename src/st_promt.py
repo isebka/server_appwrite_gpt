@@ -45,21 +45,18 @@ async def download_file():
                 logger.info(f"Ошибка скачивания: статус {response.status}")
                 return False
 
-def get_saved_last_modified():
+def get_saved_last_modified(current_time):
     if os.path.exists(LAST_MODIFIED_FILE):
         with open(LAST_MODIFIED_FILE, 'r') as f:
             try:
                 return float(f.read().strip())
             except ValueError:
-                # Если файл содержит невалидные данные, создаем его заново.
-                current_time = time.time()
                 save_last_modified(current_time)
                 logger.info(f"Файл с сохраненной датой содержит невалидное значение. Файл '{LAST_MODIFIED_FILE}' **перезаписан** текущим timestamp: {current_time}.")
-                return current_time
-    current_time = time.time()
+                return False
     save_last_modified(current_time)
     logger.info(f"Файл с сохраненной датой не найден. Создан новый файл '{LAST_MODIFIED_FILE}' с текущим timestamp: {current_time}.")
-    return current_time
+    return False
 
 def save_last_modified(timestamp):
     with open(LAST_MODIFIED_FILE, 'w') as f:
@@ -75,13 +72,14 @@ async def check_file_update():
         logger.info("Не удалось получить дату изменения.")
         return
 
-    saved_last_modified = get_saved_last_modified()
-    logger.info(f"Сохраненная дата изменения (timestamp): {saved_last_modified}")
-
-    if current_last_modified > saved_last_modified:
-        logger.info("Файл изменился! Запускаем скачивание и сохранение новой даты.")
-        success = await download_file()
-        if success:
-            save_last_modified(current_last_modified)
+    saved_last_modified = get_saved_last_modified(current_last_modified)
+    if saved_last_modified:
+    	logger.info(f"Сохраненная дата изменения (timestamp): {saved_last_modified}")
     else:
-        logger.info("Файл не изменился.")
+        if current_last_modified > saved_last_modified:
+            logger.info("Файл изменился! Запускаем скачивание и сохранение новой даты.")
+            success = await download_file()
+            if success:
+                save_last_modified(current_last_modified)
+        else:
+            logger.info("Файл не изменился.")
