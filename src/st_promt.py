@@ -13,17 +13,19 @@ LAST_MODIFIED_FILE = os.environ.get("LAST_MODIFIED_FILE")
 async def get_drive_last_modified(url):
     async with aiohttp.ClientSession() as session:
         async with session.head(url) as response:
-            print(response)
+            # Логируем ответ
+            logger.info(f"HEAD Response: {response}")
+                
             last_modified = response.headers.get('Last-Modified')
-            print(f"Last-Modified: {last_modified}")
+            logger.info(f"Last-Modified: {last_modified}")
+                
             if last_modified:
                 try:
-                    # Преобразуем в timestamp
                     timestamp = time.mktime(time.strptime(last_modified, '%a, %d %b %Y %H:%M:%S %Z'))
-                    print(f"Timestamp: {timestamp}")
+                    logger.info(f"Timestamp: {timestamp}")
                     return timestamp
                 except ValueError as e:
-                    print(f"Ошибка парсинга даты: {e}")
+                    logger.info(f"Ошибка парсинга даты '{last_modified}': {e}")
                     return None
             return None
 
@@ -49,25 +51,32 @@ def get_saved_last_modified():
             try:
                 return float(f.read().strip())
             except ValueError:
-                return 0
-    return 0
+    current_time = time.time()
+    save_last_modified(current_time)
+    logger.info(f"Файл с сохраненной датой не найден. Создан новый файл '{LAST_MODIFIED_FILE}' с текущим timestamp: {current_time}.")
+    return current_time
 
 def save_last_modified(timestamp):
     with open(LAST_MODIFIED_FILE, 'w') as f:
         f.write(str(timestamp))
+    logger.info(f"Новый timestamp {timestamp} сохранен.")
         
 async def check_file_update():
-    current_last_modified = await get_drive_last_modified(url)  # Теперь с await
-    print(current_last_modified)
+    logger.info("Запускаем проверку обновления файла...")
+    current_last_modified = await get_drive_last_modified(url)
+    logger.info(f"Текущая дата изменения (timestamp): {current_last_modified}")
+    
     if current_last_modified is None:
-        print("Не удалось получить дату изменения.")
+        logger.info("Не удалось получить дату изменения.")
         return
 
     saved_last_modified = get_saved_last_modified()
-    if current_last_modified > saved_last_modified:
-        print("Файл изменился! Отправляем уведомления.")
-        await download_file()
-        save_last_modified(current_last_modified)
+    logger.info(f"Сохраненная дата изменения (timestamp): {saved_last_modified}")
 
+    if current_last_modified > saved_last_modified:
+        logger.info("Файл изменился! Запускаем скачивание и сохранение новой даты.")
+        success = await download_file()
+        if success:
+            save_last_modified(current_last_modified)
     else:
-        print("Файл не изменился.")
+        logger.info("Файл не изменился.")
