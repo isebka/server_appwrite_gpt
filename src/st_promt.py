@@ -51,6 +51,11 @@ def get_saved_last_modified():
             try:
                 return float(f.read().strip())
             except ValueError:
+                # Если файл содержит невалидные данные, создаем его заново.
+                current_time = time.time()
+                save_last_modified(current_time)
+                logger.info(f"Файл с сохраненной датой содержит невалидное значение. Файл '{LAST_MODIFIED_FILE}' **перезаписан** текущим timestamp: {current_time}.")
+                return current_time
     current_time = time.time()
     save_last_modified(current_time)
     logger.info(f"Файл с сохраненной датой не найден. Создан новый файл '{LAST_MODIFIED_FILE}' с текущим timestamp: {current_time}.")
