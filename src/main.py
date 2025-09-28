@@ -22,62 +22,40 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def ober_message():
-    async def message_sort(message: aio_pika.IncomingMessage):
-            try:
-                logging.info("message_sort start")
-                gpt_response(text=message.body.decode("utf-8"), user_id=message.headers.get("user_id"))
-                await message.ack()
-                await asyncio.sleep(5)
-            except Exception as e:
-                logger.error(f"Ошибка при обработке сообщения: {e}", exc_info=True)
-                await message.nack(requeue=True)
-    return message_sort
-
-
-async def start():
+# Функция обработки сообщения (адаптирована из ober_message)
+async def process_message(text: str, user_id: str | None):
     try:
-        connection = await aio_pika.connect_robust(os.environ.get("RABBITMQ_URL"))
-        async with connection:
-            channel = await connection.channel()
-            queue = await channel.declare_queue("gpt_sort", durable=True)
-            logger.info("Starting RabbitMQ consumer...")
-
-            message_sort = ober_message()
-            processed_count = 0
-            while True:
-                try:
-                    message = await queue.get(no_ack=False, timeout=5)
-                except aio_pika.exceptions.QueueEmpty:
-                    logger.info("Queue is empty, stopping consumer.")
-                    if connection and not connection.is_closed:
-                        await connection.close()
-                    break
-                try:
-                    await message_sort(message)
-                    processed_count += 1
-                    logger.info(f"Processed {processed_count} messages.")
-                except Exception as e:
-                    if connection and not connection.is_closed:
-                        await connection.close()
-                    logger.info(f"Eror in batch processing : {e}", exc_info=True)
-                    await message.nack(requeue=True)
-
+        logger.info("message processing start")
+        gpt_response(text=text, user_id=user_id)  # Если gpt_response async, добавьте await
+        await asyncio.sleep(5)  # Опционально, если нужна задержка
+        return True  # Успех
     except Exception as e:
-        if connection and not connection.is_closed:
-            await connection.close()
-        logger.error(f"Consumer connection error: {e}", exc_info=True)
-    finally:
-        if connection and not connection.is_closed:
-            await connection.close()
+        logger.error(f"Ошибка при обработке сообщения: {e}", exc_info=True)
+        return False  # Ошибка
+
 
 
 # Основная функция, вызываемая Appwrite
 async def main(context):
     logger.info('main start')
-    if context.req.method == "GET" and context.req.path == "/run":
-        await start()
-        return context.res.json({"status": "Consumer started and running"})
+
+    if context.req.method == "POST" and context.req.path == "/run":
+        try:
+            # Тело - AMQP message body (строка)
+            text = context.req.body  # В Appwrite это строка; если JSON, используйте context.req.json()
+            # Заголовок user_id из AMQP headers
+            user_id = context.req.headers.get("user_id")
+            
+            success = await process_message(text=text, user_id=user_id)
+            
+            if success:
+                return context.res.send("OK", 200)  # Ack: сообщение удалено
+            else:
+                return context.res.send("Error", 500)  # Retry: CloudAMQP повторит
+        except Exception as e:
+            logger.error(f"Ошибка в POST-обработке: {e}", exc_info=True)
+            return context.res.send("Internal Error", 500)  # Retry
+
     if context.req.method == "GET" and context.req.path == "/promt":
         await asyncio.create_task(download_file())
         return context.res.json({"status": "Promt replait"})
