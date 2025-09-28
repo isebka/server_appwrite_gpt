@@ -40,11 +40,11 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/run":
         try:
-            logger.info("fsdsdffds:", context.req.body)
+            logger.info(f"fsdsdffds: {context.req.body}")
             data = json.loads(context.req.body)
-            logger.info("asasas: ", context.req.body)
-            logger.info("data2d:", data)
-            logger.info("dasasddsa", data.get("user_id"))
+            logger.info(f"asasas: {context.req.body}")
+            logger.info(f"data2d: {data}")
+            logger.info(f"dasasddsa: {data.get('user_id')}")
             #success = await process_message(text=text, user_id=user_id)
             
             
