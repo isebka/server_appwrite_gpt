@@ -40,14 +40,8 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/run":
         try:
-            logger.info(context.req.headers)
-            logger.info(context.req.body)
-
-            data = context.req.json
-            logger.info("data:", data)
-            if data is None:
-                data = json.loads(context.req.body)
-                logger.info("data2:", data)
+            data = json.loads(context.req.body)
+            logger.info("data2:", data)
             logger.info("decode:", data.decode(("utf-8")))
             logger.info(data.get("user_id"))
             #success = await process_message(text=text, user_id=user_id)
