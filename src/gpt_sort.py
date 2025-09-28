@@ -39,7 +39,7 @@ async def gpt_response(text, user_id, attempt=1, max_attempts=3):
             logging.info("check: Вызываю check_file_update() и готовлюсь к повтору.")
             await check_file_update()
             logging.info("check")
-            return gpt_response(text, user_id, attempt + 1, max_attempts)
+            return await gpt_response(text, user_id, attempt + 1, max_attempts)
         else:
             logging.error(f"Попытки исчерпаны ({max_attempts}). Не удалось получить GPT-ответ.")
             return None
