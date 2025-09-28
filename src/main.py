@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 async def process_message(text: str, user_id: str):
     try:
         logger.info("message processing start")
-        gpt_response(text=text, user_id=user_id)  # Если gpt_response async, добавьте await
+        await gpt_response(text=text, user_id=user_id)  # Если gpt_response async, добавьте await
         return True  # Успех
     except Exception as e:
         logger.error(f"Ошибка при обработке сообщения: {e}", exc_info=True)

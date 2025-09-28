@@ -3,11 +3,12 @@ import os,json, logging, time, asyncio
 from .excel import excel_manager
 from .st_promt import check_file_update
 
+
 file_path = os.environ.get("file_path")
 
 logger = logging.getLogger(__name__)
 
-def gpt_response(text, user_id, attempt=1, max_attempts=3):
+async def gpt_response(text, user_id, attempt=1, max_attempts=3):
     logging.info("start gpt fun")
     if not text or not user_id:
         return None
@@ -36,7 +37,7 @@ def gpt_response(text, user_id, attempt=1, max_attempts=3):
         logging.info("check")
         if attempt < max_attempts:
             logging.info("check: Вызываю check_file_update() и готовлюсь к повтору.")
-            asyncio.run(check_file_update())
+            await check_file_update()
             time.sleep(15)
             return gpt_response(text, user_id, attempt + 1, max_attempts)
         else:
