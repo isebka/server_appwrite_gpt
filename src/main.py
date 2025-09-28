@@ -42,6 +42,7 @@ async def main(context):
         try:
             logger.info("fsdsdffds:", context.req.body)
             data = json.loads(context.req.body)
+            logger.info("asasas: ", context.req.body)
             logger.info("data2d:", data)
             logger.info("dasasddsa", data.get("user_id"))
             #success = await process_message(text=text, user_id=user_id)
