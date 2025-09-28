@@ -42,14 +42,12 @@ async def main(context):
         try:
             logger.info("fsdsdffds:", context.req.body)
             data = json.loads(context.req.body)
-            logger.info("data2:", data)
+            logger.info("data2d:", data)
             logger.info("dasasddsa", data.get("user_id"))
             #success = await process_message(text=text, user_id=user_id)
             
-            if success:
-                return context.res.send("OK", 200)  # Ack: сообщение удалено
-            else:
-                return context.res.send("Error", 500)  # Retry: CloudAMQP повторит
+            
+            return context.res.send("Error", 500)  # Retry: CloudAMQP повторит
         except Exception as e:
             logger.error(f"Ошибка в POST-обработке: {e}", exc_info=True)
             return context.res.send("Internal Error", 500)  # Retry
