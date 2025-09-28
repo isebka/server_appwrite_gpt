@@ -1,5 +1,5 @@
 from g4f.client import Client
-import os,json, logging, time
+import os,json, logging, time, asyncio
 from .excel import excel_manager
 from .st_promt import check_file_update
 
@@ -36,7 +36,7 @@ def gpt_response(text, user_id, attempt=1, max_attempts=3):
         logging.info("check")
         if attempt < max_attempts:
             logging.info("check: Вызываю check_file_update() и готовлюсь к повтору.")
-            check_file_update()
+            asyncio.run(check_file_update())
             time.sleep(15)
             return gpt_response(text, user_id, attempt + 1, max_attempts)
         else:
