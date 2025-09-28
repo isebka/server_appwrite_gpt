@@ -42,12 +42,14 @@ async def main(context):
         try:
             logger.info(context.req.headers)
             logger.info(context.req.body)
-            # Тело - AMQP message body (строка)
-            text = context.req.body  # В Appwrite это строка; если JSON, используйте context.req.json()
-            # Заголовок user_id из AMQP headers
-            user_id = context.req.headers.get("user_id")
-            
-            success = await process_message(text=text, user_id=user_id)
+
+            data = context.req.json
+            logger.info("data:", data)
+            if data is None:
+                data = json.loads(context.req.body)
+                logger.info("data2:" data)
+            logger.info(data.get("user_id"))
+            #success = await process_message(text=text, user_id=user_id)
             
             if success:
                 return context.res.send("OK", 200)  # Ack: сообщение удалено
