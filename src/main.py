@@ -40,15 +40,16 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/run":
         try:
-            logger.info(f"fsdsdffds: {context.req.body}")
             data = json.loads(context.req.body)
-            logger.info(f"asasas: {context.req.body}")
             logger.info(f"data2d: {data}")
-            logger.info(f"dasasddsa: {data.get('user_id')}")
-            #success = await process_message(text=text, user_id=user_id)
-            
-            
-            return context.res.send("Error", 500)  # Retry: CloudAMQP повторит
+            user_id = data.get("user_id")
+            text = data.get("text_to_process")
+            logger.info(f"fal: {user_id}|{text}")
+            success = await process_message(text=text, user_id=user_id)
+            if success:
+                return context.res.send("OK", 200)  # Ack: сообщение удалено
+            else:
+                return context.res.send("Error", 500)  # Retry: CloudAMQP повторит
         except Exception as e:
             logger.error(f"Ошибка в POST-обработке: {e}", exc_info=True)
             return context.res.send("Internal Error", 500)  # Retry
