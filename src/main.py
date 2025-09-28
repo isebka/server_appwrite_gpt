@@ -50,16 +50,22 @@ async def start():
                     message = await queue.get(no_ack=False, timeout=5)
                 except aio_pika.exceptions.QueueEmpty:
                     logger.info("Queue is empty, stopping consumer.")
+                    if connection and not connection.is_closed:
+                        await connection.close()
                     break
                 try:
                     await message_sort(message)
                     processed_count += 1
                     logger.info(f"Processed {processed_count} messages.")
                 except Exception as e:
+                    if connection and not connection.is_closed:
+                        await connection.close()
                     logger.info(f"Eror in batch processing : {e}", exc_info=True)
                     await message.nack(requeue=True)
 
     except Exception as e:
+        if connection and not connection.is_closed:
+            await connection.close()
         logger.error(f"Consumer connection error: {e}", exc_info=True)
     finally:
         if connection and not connection.is_closed:

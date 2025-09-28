@@ -32,5 +32,6 @@ def gpt_response(text, user_id):
         except json.JSONDecodeError:
             logger.info("Error: The response content is not valid JSON:", content_str)
     except FileNotFoundError:
+        logger.info("check")
         check_file_update()
 
