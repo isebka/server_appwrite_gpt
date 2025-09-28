@@ -26,7 +26,7 @@ def gpt_response(text, user_id):
         )
         # Parse the string content as JSON
         content_str = response.choices[0].message.content
-        logger.info(content_str)
+        logging.info(content_str)
         try:
             content_dict = json.loads(content_str)  # This converts the string to a dict
             excel_manager(content_dict, user_id)  # Now pass the dict to your function
