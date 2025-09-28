@@ -40,6 +40,7 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/run":
         try:
+        	logger.info("1:", context.req.body)
             data = json.loads(context.req.body)
             logger.info("data2:", data)
             logger.info("decode:", data.decode(("utf-8")))
