@@ -40,8 +40,8 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/run":
         try:
-        	logger.info(context.req.headers)
-        	logger.info(context.req.body)
+            logger.info(context.req.headers)
+            logger.info(context.req.body)
             # Тело - AMQP message body (строка)
             text = context.req.body  # В Appwrite это строка; если JSON, используйте context.req.json()
             # Заголовок user_id из AMQP headers
