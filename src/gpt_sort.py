@@ -7,7 +7,7 @@ file_path = os.environ.get("file_path")
 
 logger = logging.getLogger(__name__)
 
-def gpt_response(text, user_id):
+def gpt_response(text, user_id, attempt=1, max_attempts=3):
     logging.info("start gpt fun")
     if not text or not user_id:
         return None
@@ -34,5 +34,11 @@ def gpt_response(text, user_id):
             logger.info("Error: The response content is not valid JSON:", content_str)
     except Exception:
         logging.info("check")
-        check_file_update()
+        if attempt < max_attempts:
+            check_file_update()
+            return gpt_response(text, user_id, attempt + 1, max_attempts)
+        else:
+            logging.error(f"Попытки исчерпаны ({max_attempts}). Не удалось получить GPT-ответ.")
+            return None
+
 
