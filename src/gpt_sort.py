@@ -29,7 +29,7 @@ async def gpt_response(text, user_id, attempt=1, max_attempts=5):
         content_str = response.choices[0].message.content
         logging.info(content_str)
         if "https://discord.gg/9g5wkVTn8s" in content_str:
-        	await asyncio.sleep(5)
+            await asyncio.sleep(5)
             return await gpt_response(text, user_id, attempt + 1, max_attempts) 
         try:
             content_dict = json.loads(content_str)  # This converts the string to a dict
