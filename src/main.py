@@ -2,9 +2,9 @@ import os, json
 import logging
 import asyncio
 import aio_pika
-from gpt_sort import gpt_response
-from st_promt import download_file
-from excel import excel_manager, check_available, give_permision
+from .gpt_sort import gpt_response
+from .st_promt import download_file
+from .excel import excel_manager, check_available, give_permision
 
 # Настройка логирования
 log_file = "app.log"
