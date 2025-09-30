@@ -37,6 +37,7 @@ async def process_message(text: str, user_id: str):
 # Основная функция, вызываемая Appwrite
 async def main(context):
     logger.info('main start')
+    logger.info(context.req)
 
     if context.req.method == "POST" and context.req.path == "/run":
         try:
