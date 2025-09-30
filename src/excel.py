@@ -7,7 +7,10 @@ import time
 from appwrite.query import Query
 from appwrite.client import Client
 from appwrite.services.databases import Databases
+from datetime import datetime, timedelta
 
+utc_now = datetime.utcnow()
+local_time = utc_now + timedelta(hours=3)
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +73,7 @@ def create_coloum(spreadsheet_id, year_month):  # year_month = "2025-09"
 
 def add_transaction(spreadsheet_id, data):
     try:
-        sheet = create_coloum(spreadsheet_id, time.strftime('%Y-%m'))
+        sheet = create_coloum(spreadsheet_id, local_time.strftime('%Y-%m'))
 
         # Найди следующую пустую строку
         row = len(sheet.get_all_values()) + 1
@@ -78,7 +81,7 @@ def add_transaction(spreadsheet_id, data):
         # Запиши данные (A:H)
         sheet.update(
             range_name=f'A{row}:H{row}',
-            values=[[time.strftime('%Y-%m-%d'), time.strftime('%H:%M'), data.get('type', ''), data.get('amount', ''), data.get('currency', ''), data.get('category', ''), data.get('comment', '')]],
+            values=[[local_time.strftime('%Y-%m-%d'), local_time.strftime('%H:%M'), data.get('type', ''), data.get('amount', ''), data.get('currency', ''), data.get('category', ''), data.get('comment', '')]],
             value_input_option='USER_ENTERED'
         )
 

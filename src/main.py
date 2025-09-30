@@ -2,13 +2,9 @@ import os, json
 import logging
 import asyncio
 import aio_pika
-from .gpt_sort import gpt_response
-
-from .st_promt import download_file
-
-from .excel import excel_manager,check_available,give_permision
-
-
+from gpt_sort import gpt_response
+from st_promt import download_file
+from excel import excel_manager, check_available, give_permision
 
 # Настройка логирования
 log_file = "app.log"
@@ -21,7 +17,6 @@ logging.basicConfig(
     ])
 logger = logging.getLogger(__name__)
 
-
 # Функция обработки сообщения (адаптирована из ober_message)
 async def process_message(text: str, user_id: str):
     try:
@@ -32,28 +27,57 @@ async def process_message(text: str, user_id: str):
         logger.error(f"Ошибка при обработке сообщения: {e}", exc_info=True)
         return False  # Ошибка
 
+# Функция для обработки очереди RabbitMQ при cron-триггере
+async def consume_queue():
+    url = os.environ.get("RABBITMQ_URL")
+    if not url:
+        logger.error("CLOUDAMQP_URL не задан в переменных окружения")
+        return
 
+    try:
+        connection = await aio_pika.connect_robust(url)
+        async with connection:
+            channel = await connection.channel()
+            queue_name = "gpt_sort"  # Измените на реальное имя очереди, если нужно
+            queue = await channel.declare_queue(queue_name, durable=True)
+
+            while True:
+                async with queue.iterator() as queue_iter:
+                    async for message in queue_iter:
+                        if message is None:
+                            break
+                        try:
+                            data = json.loads(message.body.decode())
+                            user_id = data.get("user_id")
+                            text = data.get("text_to_process")
+                            if user_id and text:
+                                success = await process_message(text, user_id)
+                                if success:
+                                    await message.ack()
+                                else:
+                                    await message.nack(requeue=True)
+                            else:
+                                logger.warning("Некорректные данные в сообщении")
+                                await message.nack(requeue=True)
+                        except json.JSONDecodeError as e:
+                            logger.error(f"Ошибка декодирования JSON в сообщении: {e}")
+                            await message.nack(requeue=True)
+                        except Exception as e:
+                            logger.error(f"Ошибка обработки сообщения из очереди: {e}", exc_info=True)
+                            await message.nack(requeue=True)
+        logger.info("Обработка очереди завершена")
+    except Exception as e:
+        logger.error(f"Ошибка подключения к RabbitMQ: {e}", exc_info=True)
 
 # Основная функция, вызываемая Appwrite
 async def main(context):
     logger.info('main start')
     logger.info(context.req.headers)
 
-    if context.req.method == "POST" and context.req.path == "/run":
-        try:
-            data = json.loads(context.req.body)
-            logger.info(f"data2d: {data}")
-            user_id = data.get("user_id")
-            text = data.get("text_to_process")
-            logger.info(f"fal: {user_id}|{text}")
-            success = await process_message(text=text, user_id=user_id)
-            if success:
-                return context.res.send("OK", 200)  # Ack: сообщение удалено
-            else:
-                return context.res.send("Error", 500)  # Retry: CloudAMQP повторит
-        except Exception as e:
-            logger.error(f"Ошибка в POST-обработке: {e}", exc_info=True)
-            return context.res.send("Internal Error", 500)  # Retry
+    # Проверка на cron-триггер (schedule)
+    if context.req.headers.get("x-appwrite-trigger") == "schedule":
+        await consume_queue()
+        return context.res.send("Cron task completed", 200)
 
     if context.req.method == "GET" and context.req.path == "/promt":
         await asyncio.create_task(download_file())
@@ -74,24 +98,15 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/add_email":
         try:
-            data = context.req.body  
-        
-            # Проверяем, является ли data словарем, как ожидается
-            if not isinstance(data, dict):
-                # Если это не словарь, возможно, тело запроса пустое или не JSON
-                logger.error(f"context.req.body is not a dict, but: {type(data)}")
-                return context.req.json({"error": "Request body is missing or not a dictionary."})
-
-            # Извлекаем данные из словаря
+            data = json.loads(context.req.body)  # Парсим JSON из строки
             email = data.get("email")
             user_id = data.get("user_id")
             if not email or not user_id:
                 return context.res.json({"error": "user_id and email are required"})
 
-            # Асинхронно запускаем задачу (если сервер поддерживает asyncio)
             gp = give_permision(user_id, email)
             if not gp:
-            	return context.res.json({"status": "Email already"})
+                return context.res.json({"status": "Email already"})
             return context.res.json({"status": "Email successfully"})
         except json.JSONDecodeError:
             return context.res.json({"error": "Invalid JSON"})
@@ -113,8 +128,5 @@ async def main(context):
             return context.res.text("Error reading log file.", status=500)
     return context.res.text(
                 "Hello from the Appwrite function! Use /run to run the RabbitMQ listener.")
-
-
-
 
 
