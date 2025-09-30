@@ -17,7 +17,6 @@ logging.basicConfig(
     ])
 logger = logging.getLogger(__name__)
 
-# Функция обработки сообщения (адаптирована из ober_message)
 async def process_message(text: str, user_id: str):
     try:
         logger.info("message processing start")
@@ -98,7 +97,7 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/add_email":
         try:
-            data = json.loads(context.req.body)  # Парсим JSON из строки
+            data = context.req.body
             email = data.get("email")
             user_id = data.get("user_id")
             if not email or not user_id:
