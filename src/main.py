@@ -37,14 +37,11 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/run":
         try:
-            user_id = context.req.headers.get('user_id')
-
-
             try:
                 body = context.req.body_json
             except:
                 body = context.req.body
-
+            user_id = body.get("user_id")
             # Запуск в фоне
             background_thread = threading.Thread(
                 target=process_message,
