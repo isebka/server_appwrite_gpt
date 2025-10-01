@@ -17,66 +17,55 @@ logging.basicConfig(
     ])
 logger = logging.getLogger(__name__)
 
-async def process_message(text: str, user_id: str):
+def process_message(user_id, text: str):
     try:
-        logger.info("message processing start")
-        await gpt_response(text=text, user_id=user_id)  # Если gpt_response async, добавьте await
-        return True  # Успех
+        logger.info(f"Фоновая задача: Начало обработки для пользователя {user_id}.")
+
+        async def inner_async():
+            await gpt_response(text=text, user_id=user_id)
+
+        asyncio.run(inner_async()) 
+
+        logger.info("Фоновая задача: Сообщение успешно отправлено в очередь 'gpt_sort'.")
+
     except Exception as e:
-        logger.error(f"Ошибка при обработке сообщения: {e}", exc_info=True)
-        return False  # Ошибка
+        logger.error(f"Фоновая задача: Ошибка при обработке для пользователя {user_id}: {e}", exc_info=True)
 
-# Функция для обработки очереди RabbitMQ при cron-триггере
-async def consume_queue():
-    url = os.environ.get("RABBITMQ_URL")
-    if not url:
-        logger.error("CLOUDAMQP_URL не задан в переменных окружения")
-        return
-
-    try:
-        connection = await aio_pika.connect_robust(url)
-        async with connection:
-            channel = await connection.channel()
-            queue_name = "gpt_sort"  # Измените на реальное имя очереди, если нужно
-            queue = await channel.declare_queue(queue_name, durable=True)
-
-            while True:
-                async with queue.iterator() as queue_iter:
-                    async for message in queue_iter:
-                        if message is None:
-                            break
-                        try:
-                            data = json.loads(message.body.decode())
-                            user_id = data.get("user_id")
-                            text = data.get("text_to_process")
-                            if user_id and text:
-                                success = await process_message(text, user_id)
-                                if success:
-                                    await message.ack()
-                                else:
-                                    await message.nack(requeue=True)
-                            else:
-                                logger.warning("Некорректные данные в сообщении")
-                                await message.nack(requeue=True)
-                        except json.JSONDecodeError as e:
-                            logger.error(f"Ошибка декодирования JSON в сообщении: {e}")
-                            await message.nack(requeue=True)
-                        except Exception as e:
-                            logger.error(f"Ошибка обработки сообщения из очереди: {e}", exc_info=True)
-                            await message.nack(requeue=True)
-        logger.info("Обработка очереди завершена")
-    except Exception as e:
-        logger.error(f"Ошибка подключения к RabbitMQ: {e}", exc_info=True)
-
-# Основная функция, вызываемая Appwrite
 async def main(context):
     logger.info('main start')
-    logger.info(context.req.headers)
 
-    # Проверка на cron-триггер (schedule)
-    if context.req.headers.get("x-appwrite-trigger") == "schedule":
-        await consume_queue()
-        return context.res.send("Cron task completed", 200)
+    if context.req.method == "POST" and context.req.path == "/run":
+        try:
+            user_id = context.req.headers.get('r-user_id')
+            if not user_id:
+                logger.warning("Запрос без заголовка 'r-user_id'.")
+                return context.res.json({"error": "Missing r-user_id in headers"}, 400)
+
+
+            try:
+                body = context.req.body_json
+                logger.info(f"json: {body}")
+            except:
+                body = context.req.body
+                logger.info(f"body: {body}")
+
+            # Запуск в фоне
+            background_thread = threading.Thread(
+                target=process_message,
+                args=(user_id, body),  # Передаём body как text
+                name=f"Worker-{user_id}",
+                daemon=True  # Чтобы не блокировал shutdown
+            )
+            #background_thread.start()
+
+            logger.info(f"Вебхук для пользователя {user_id} принят. Запущена фоновая задача.")
+
+            # Немедленно возвращаем ответ
+            return context.res.json({"status": "Accepted for processing"}, 202)
+
+        except Exception as e:
+            logger.error(f"Ошибка при запуске фоновой задачи: {e}", exc_info=True)
+            return context.res.json({"error": "Failed to start processing task"}, 500)
 
     if context.req.method == "GET" and context.req.path == "/promt":
         await asyncio.create_task(download_file())
