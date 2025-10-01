@@ -2,6 +2,7 @@ import os, json
 import logging
 import asyncio
 import aio_pika
+import threading
 from .gpt_sort import gpt_response
 from .st_promt import download_file
 from .excel import excel_manager, check_available, give_permision
