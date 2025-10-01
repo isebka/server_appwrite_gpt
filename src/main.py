@@ -36,6 +36,8 @@ async def main(context):
 
     if context.req.method == "POST" and context.req.path == "/run":
         try:
+        	logger.info(context.req.headers)
+        	logger.info(context.req.body)
             user_id = context.req.headers.get('r-user_id')
             if not user_id:
                 logger.warning("Запрос без заголовка 'r-user_id'.")
