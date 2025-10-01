@@ -41,19 +41,17 @@ async def main(context):
 
             try:
                 body = context.req.body_json
-                logger.info(f"json: {body}")
             except:
                 body = context.req.body
-                logger.info(f"body: {body}")
 
             # Запуск в фоне
             background_thread = threading.Thread(
                 target=process_message,
-                args=(user_id, body),  # Передаём body как text
+                args=(user_id, body.get('text_to_process')),  # Передаём body как text
                 name=f"Worker-{user_id}",
                 daemon=True  # Чтобы не блокировал shutdown
             )
-            #background_thread.start()
+            background_thread.start()
 
             logger.info(f"Вебхук для пользователя {user_id} принят. Запущена фоновая задача.")
 
